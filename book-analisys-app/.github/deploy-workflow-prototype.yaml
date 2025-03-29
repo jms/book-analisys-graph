@@ -1,0 +1,50 @@
+# .github/workflows/deploy-gcp-cloudrun.yml
+name: Deploy Next.js to Google Cloud Run
+
+on:
+  release:
+    types: [published]
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ secrets.GCP_REGION }}
+  SERVICE_NAME: nextjs-gutenberg-llm
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ env.SERVICE_NAME }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      packages: 'write'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref_name }} # Checkout the tagged release
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Configure Docker authentication (GCR)
+        run: gcloud auth configure-docker ghcr.io
+
+      - name: Build and tag Docker image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.ref_name }} .
+
+      - name: Push Docker image to GitHub Container Registry (GHCR)
+        run: docker push ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.IMAGE_NAME }}:${{ github.ref_name }} \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --set-env-vars LLM_API_ENDPOINT=${{ secrets.LLM_API_ENDPOINT }},LLM_API_KEY=${{ secrets.LLM_API_KEY }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_PRIVATE_KEY_ID=${{ secrets.FIREBASE_PRIVATE_KEY_ID }},FIREBASE_PRIVATE_KEY="${{ secrets.FIREBASE_PRIVATE_KEY }}",FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_CLIENT_ID=${{ secrets.FIREBASE_CLIENT_ID }},FIREBASE_CLIENT_CERT_URL=${{ secrets.FIREBASE_CLIENT_CERT_URL }} \
+            --allow-unauthenticated #If you want it to be public.
