@@ -134,3 +134,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# exclude generated prisma client
+book-analisys-app/generated
+# exclude ide files
+.idea

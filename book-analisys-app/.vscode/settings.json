@@ -1,0 +1,8 @@
+{
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-workflow.json": [
+            "file:///home/jms/Projects/book-analisys-graph/book-analisys-app/.github/deploy-workflow-prototype.yaml",
+            "file:///home/jms/Projects/book-analisys-graph/book-analisys-app/.github/build-tag-prototype.yaml"
+        ]
+    }
+}
