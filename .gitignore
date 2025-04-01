@@ -136,6 +136,7 @@ dist
 .pnp.*
 
 # exclude generated prisma client
-book-analisys-app/generated
+generated
+
 # exclude ide files
 .idea

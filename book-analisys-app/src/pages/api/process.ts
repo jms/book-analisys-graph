@@ -5,7 +5,7 @@ import {PrismaClient} from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function downloadBook(bookId: number): Promise<string | null> {
-    const url = `https://www.gutenberg.org/files/${bookId}/${bookId}-0.txt`;
+    const url = `https://www.gutenberg.org/ebooks/${bookId}.txt.utf-8`;
     try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -87,13 +87,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         if (!bookText) {
             bookText = await downloadBook(bookId);
-
             if (bookText) {
                 await cacheBookText(bookId, bookText);
             } else {
                 return res.status(500).json({error: 'Failed to download book.'});
             }
         }
+        // TODO: parse book and return network graph data from llm
+        return res.status(200).json({result: bookId});
     } catch (error) {
         if (error instanceof z.ZodError) {
             return res.status(400).json({error: 'Invalid input', details: error.errors});
